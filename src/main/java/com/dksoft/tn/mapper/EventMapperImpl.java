@@ -26,9 +26,6 @@ public class EventMapperImpl implements EventMapper {
                 })
                 .collect(Collectors.toList()) : null;
 
-        Place place = new Place();
-        place.setId(dto.placeId());
-
         User organizer = new User();
         organizer.setId(dto.organizerId());
 
@@ -42,10 +39,9 @@ public class EventMapperImpl implements EventMapper {
                 .title(dto.title())
                 .description(dto.description())
                 .shortDescription(dto.shortDescription())
-                .place(place)
                 .categories(categories)
                 .organizer(organizer)
-                .isActive(dto.isActive())
+                .isPublished(dto.isPublished())
                 .createdAt(dto.createdAt())
                 .updatedAt(dto.updatedAt())
                 .tags(dto.tags())
@@ -69,10 +65,9 @@ public class EventMapperImpl implements EventMapper {
                 event.getTitle(),
                 event.getDescription(),
                 event.getShortDescription(),
-                event.getPlace() != null ? event.getPlace().getId() : null,
                 categoryIds,
                 event.getOrganizer() != null ? event.getOrganizer().getId() : null,
-                event.isActive(),
+                event.isPublished(),
                 event.getCreatedAt(),
                 event.getUpdatedAt(),
                 event.getTags(),

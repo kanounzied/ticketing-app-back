@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/events")
+@RequestMapping("/api/events")
 public class EventController {
 
     private final EventService eventService;
@@ -27,12 +27,13 @@ public class EventController {
         this.eventMapper = eventMapper;
     }
 
-    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @PostMapping()
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EventDto> createEvent(@Valid @RequestPart("event") EventDto eventDto,
-                                                @RequestPart(value = "images", required = false) MultipartFile[] images) throws IOException {
+    public ResponseEntity<EventDto> createEvent(
+            @RequestBody EventDto eventDto
+    ) throws IOException {
         Event event = eventMapper.fromEventDTO(eventDto);
-        Event savedEvent = eventService.createEvent(event, images);
+        Event savedEvent = eventService.createEvent(event);
         return ResponseEntity.ok(eventMapper.fromEvent(savedEvent));
     }
 
@@ -58,7 +59,7 @@ public class EventController {
                                                 @Valid @RequestPart("event") EventDto eventDto,
                                                 @RequestPart(value = "images", required = false) MultipartFile[] images) throws EventNotFound, IOException {
         Event event = eventMapper.fromEventDTO(eventDto);
-        Event updatedEvent = eventService.updateEvent(id, event, images);
+        Event updatedEvent = eventService.updateEvent(id, event);
         return ResponseEntity.ok(eventMapper.fromEvent(updatedEvent));
     }
 

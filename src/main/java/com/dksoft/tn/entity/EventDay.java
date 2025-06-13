@@ -37,6 +37,10 @@ public class EventDay {
     @JsonBackReference("event-eventday")
     private Event event;
 
+    @ManyToOne
+    @JoinColumn(name = "place_id", nullable = false)
+    private Place place;
+
     @OneToMany(mappedBy = "eventDay", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EventDayTicketType> eventDayTicketTypes = new ArrayList<>();
 }

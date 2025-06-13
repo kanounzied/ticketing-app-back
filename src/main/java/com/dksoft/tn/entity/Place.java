@@ -21,6 +21,9 @@ public class Place {
     private long id;
 
     @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
     private String address;
 
     @Column
@@ -35,5 +38,5 @@ public class Place {
     private int maxCapacity;
 
     @OneToMany(mappedBy = "place", cascade = CascadeType.ALL)
-    private List<Event> events = new ArrayList<>();
+    private List<EventDay> eventDays = new ArrayList<>();
 }

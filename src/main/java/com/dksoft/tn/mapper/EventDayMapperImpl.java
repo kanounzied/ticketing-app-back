@@ -5,6 +5,7 @@ import com.dksoft.tn.dto.EventDayTicketTypeDto;
 import com.dksoft.tn.entity.Event;
 import com.dksoft.tn.entity.EventDay;
 import com.dksoft.tn.entity.EventDayTicketType;
+import com.dksoft.tn.entity.Place;
 import lombok.NonNull;
 import org.springframework.stereotype.Service;
 
@@ -22,17 +23,21 @@ public class EventDayMapperImpl implements EventDayMapper {
 
     @Override
     public EventDay fromEventDayDto(@NonNull EventDayDto dto) {
-        Event event = new Event();
-        event.setId(dto.eventId());
+        Event event = null; // Set by EventServiceImpl
 
-        List<EventDayTicketType> eventDayTicketTypes = dto.eventDayTicketTypes() != null ? dto.eventDayTicketTypes().stream()
+        Place place = new Place();
+        place.setId(dto.placeId());
+
+        List<EventDayTicketType> eventDayTicketTypes = (dto.eventDayTicketTypes() == null || dto.eventDayTicketTypes().isEmpty())
+                ? List.of() // Default to empty list if null or empty
+                : dto.eventDayTicketTypes().stream()
                 .map(dtoTicket -> {
                     EventDayTicketType eventDayTicketType = new EventDayTicketType();
                     eventDayTicketType.setTicketType(ticketTypeMapper.fromTicketTypeDto(dtoTicket.ticketType()));
                     eventDayTicketType.setMaxNumber(dtoTicket.maxNumber());
                     return eventDayTicketType;
                 })
-                .collect(Collectors.toList()) : null;
+                .collect(Collectors.toList());
 
         return EventDay.builder()
                 .id(dto.id())
@@ -40,18 +45,21 @@ public class EventDayMapperImpl implements EventDayMapper {
                 .isActive(dto.isActive())
                 .maxNumber(dto.maxNumber())
                 .event(event)
+                .place(place)
                 .eventDayTicketTypes(eventDayTicketTypes)
                 .build();
     }
 
     @Override
     public EventDayDto fromEventDay(@NonNull EventDay eventDay) {
-        List<EventDayTicketTypeDto> eventDayTicketTypeDtos = eventDay.getEventDayTicketTypes() != null ? eventDay.getEventDayTicketTypes().stream()
+        List<EventDayTicketTypeDto> eventDayTicketTypeDtos = eventDay.getEventDayTicketTypes() != null
+                ? eventDay.getEventDayTicketTypes().stream()
                 .map(eventDayTicketType -> new EventDayTicketTypeDto(
                         ticketTypeMapper.fromTicketType(eventDayTicketType.getTicketType()),
                         eventDayTicketType.getMaxNumber()
                 ))
-                .collect(Collectors.toList()) : null;
+                .collect(Collectors.toList())
+                : List.of();
 
         return new EventDayDto(
                 eventDay.getId(),
@@ -59,6 +67,7 @@ public class EventDayMapperImpl implements EventDayMapper {
                 eventDay.isActive(),
                 eventDay.getMaxNumber(),
                 eventDay.getEvent() != null ? eventDay.getEvent().getId() : null,
+                eventDay.getPlace() != null ? eventDay.getPlace().getId() : null,
                 eventDayTicketTypeDtos
         );
     }

@@ -4,36 +4,22 @@ import com.dksoft.tn.entity.Event;
 import com.dksoft.tn.exception.EventNotFound;
 import com.dksoft.tn.repository.EventRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class EventService {
 
     private final EventRepository eventRepository;
-    private static final String UPLOAD_DIR = "uploads/images/";
 
     public EventService(EventRepository eventRepository) {
         this.eventRepository = eventRepository;
-        // Ensure upload directory exists
-        try {
-            Files.createDirectories(Paths.get(UPLOAD_DIR));
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create upload directory", e);
-        }
     }
 
-    public Event createEvent(Event event, MultipartFile[] images) throws IOException {
+    public Event createEvent(Event event) {
         validateEvent(event);
-        handleImageUploads(event, images);
         return eventRepository.save(event);
     }
 
@@ -45,7 +31,7 @@ public class EventService {
         return eventRepository.findAll();
     }
 
-    public Event updateEvent(long id, Event event, MultipartFile[] images) throws EventNotFound, IOException {
+    public Event updateEvent(long id, Event event) throws EventNotFound {
         Event existingEvent = eventRepository.findById(id)
                 .orElseThrow(() -> new EventNotFound("Event not found with id: " + id));
         validateEvent(event);
@@ -54,19 +40,16 @@ public class EventService {
         existingEvent.setTitle(event.getTitle());
         existingEvent.setDescription(event.getDescription());
         existingEvent.setShortDescription(event.getShortDescription());
-        existingEvent.setPlace(event.getPlace());
         existingEvent.setCategories(event.getCategories());
         existingEvent.setOrganizer(event.getOrganizer());
-        existingEvent.setIsActive(event.isActive());
+        existingEvent.setIsPublished(event.isPublished());
         existingEvent.setTags(event.getTags());
         existingEvent.setEventDays(event.getEventDays());
 
-        // Ensure eventDays reference this event
         if (event.getEventDays() != null) {
             event.getEventDays().forEach(eventDay -> eventDay.setEvent(existingEvent));
         }
 
-        handleImageUploads(existingEvent, images);
         return eventRepository.save(existingEvent);
     }
 
@@ -75,29 +58,6 @@ public class EventService {
             throw new EventNotFound("Event not found with id: " + id);
         }
         eventRepository.deleteById(id);
-    }
-
-    private void handleImageUploads(Event event, MultipartFile[] images) throws IOException {
-        if (images != null && images.length > 0) {
-            List<String> imageUrls = event.getImageUrls() != null ? event.getImageUrls() : new ArrayList<>();
-            for (MultipartFile image : images) {
-                if (!image.isEmpty()) {
-                    String fileExtension = getFileExtension(image.getOriginalFilename());
-                    String fileName = UUID.randomUUID().toString() + fileExtension;
-                    Path filePath = Paths.get(UPLOAD_DIR, fileName);
-                    Files.write(filePath, image.getBytes());
-                    imageUrls.add("/Uploads/images/" + fileName);
-                }
-            }
-            event.setImageUrls(imageUrls);
-        }
-    }
-
-    private String getFileExtension(String fileName) {
-        if (fileName == null || !fileName.contains(".")) {
-            return ".jpg"; // Default extension
-        }
-        return fileName.substring(fileName.lastIndexOf("."));
     }
 
     private void validateEvent(Event event) {
@@ -110,20 +70,27 @@ public class EventService {
         if (event.getShortDescription() == null || event.getShortDescription().isBlank()) {
             throw new IllegalArgumentException("Event short description cannot be empty");
         }
-        if (event.getPlace() == null) {
-            throw new IllegalArgumentException("Event place cannot be null");
-        }
         if (event.getOrganizer() == null) {
             throw new IllegalArgumentException("Event organizer cannot be null");
         }
         if (event.getEventDays() == null || event.getEventDays().isEmpty()) {
             throw new IllegalArgumentException("Event must have at least one event day");
         }
-        boolean hasTicketType = event.getEventDays().stream()
-                .anyMatch(eventDay -> eventDay.getEventDayTicketTypes() != null &&
-                        !eventDay.getEventDayTicketTypes().isEmpty());
-        if (!hasTicketType) {
-            throw new IllegalArgumentException("At least one event day must have a ticket type");
+        // Initialize empty ticket types if null
+        event.getEventDays().forEach(eventDay -> {
+            if (eventDay.getEventDayTicketTypes() == null) {
+                eventDay.setEventDayTicketTypes(new ArrayList<>());
+            }
+        });
+//        boolean hasTicketType = event.getEventDays().stream()
+//                .anyMatch(eventDay -> !eventDay.getEventDayTicketTypes().isEmpty());
+//        if (!hasTicketType) {
+//            throw new IllegalArgumentException("At least one event day must have a ticket type");
+//        }
+        boolean hasPlace = event.getEventDays().stream()
+                .allMatch(eventDay -> eventDay.getPlace() != null);
+        if (!hasPlace) {
+            throw new IllegalArgumentException("Each event day must have a place");
         }
     }
 }

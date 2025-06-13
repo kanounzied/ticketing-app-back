@@ -37,11 +37,7 @@ public class Event {
         private String shortDescription;
 
         @Column(nullable = false)
-        private boolean isActive = true;
-
-        @ManyToOne
-        @JoinColumn(name = "place_id", nullable = false)
-        private Place place;
+        private boolean isPublished = true;
 
         @ManyToMany
         @JoinTable(
@@ -83,7 +79,7 @@ public class Event {
                 updatedAt = LocalDateTime.now();
         }
 
-        public void setIsActive(boolean active) {
-                this.isActive = active;
+        public void setIsPublished(boolean active) {
+                this.isPublished = active;
         }
 }

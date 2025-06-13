@@ -9,6 +9,7 @@ public record EventDayDto(
         boolean isActive,
         int maxNumber,
         Long eventId,
+        Long placeId,
         List<EventDayTicketTypeDto> eventDayTicketTypes
 ) {
 }
